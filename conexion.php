@@ -1,0 +1,281 @@
+<?php
+$server = "localhost";
+$user = "root";
+$pass = "";
+$db = "biblioteca";
+
+$conexion = new mysqli($server, $user, $pass, $db);
+
+if ($conexion->connect_errno) {
+    die("Conexión Fallida: " . $conexion->connect_errno );
+} else {
+    echo "Conectado<br>";
+}
+
+// Insertar información en la base de datos
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['agregar'])) {
+    $titulo = $_POST['titulo'];
+    $autor = $_POST['autor'];
+    $anio = $_POST['anio_publicaciones'];
+    $genero = $_POST['genero'];
+
+    $query = "INSERT INTO libros (titulo, autor, anio_publicaciones, genero) VALUES ('$titulo', '$autor', '$anio', '$genero')";
+    
+    if ($conexion->query($query) === TRUE) {
+        echo "Nuevo libro agregado exitosamente.<br>";
+    } else {
+        echo "Error al agregar el libro: " . $conexion->error . "<br>";
+    }
+}
+
+// Eliminar información de la base de datos
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['eliminar'])) {
+    $id = $_POST['id'];
+    
+    $query = "DELETE FROM libros WHERE id = $id";
+    
+    if ($conexion->query($query) === TRUE) {
+        echo "Libro eliminado exitosamente.<br>";
+    } else {
+        echo "Error al eliminar el libro: " . $conexion->error . "<br>";
+    }
+}
+
+// Editar información de un libro
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['editar'])) {
+    $id = $_POST['id'];
+    $titulo = $_POST['titulo'];
+    $autor = $_POST['autor'];
+    $anio = $_POST['anio_publicaciones'];
+    $genero = $_POST['genero'];
+    
+    // Empezamos la consulta
+    $query = "UPDATE libros SET ";
+
+    // Verificamos cuáles campos no están vacíos
+    $campos = [];
+    
+    if (!empty($titulo)) {
+        $campos[] = "titulo='$titulo'";
+    }
+    if (!empty($autor)) {
+        $campos[] = "autor='$autor'";
+    }
+    if (!empty($anio)) {
+        $campos[] = "anio_publicaciones='$anio'";
+    }
+    if (!empty($genero)) {
+        $campos[] = "genero='$genero'";
+    }
+
+    // Solo si hay campos para actualizar, hacemos la consulta
+    if (!empty($campos)) {
+        $query .= implode(", ", $campos);
+        $query .= " WHERE id=$id";
+
+        if ($conexion->query($query) === TRUE) {
+            echo "Libro editado exitosamente.<br>";
+        } else {
+            echo "Error al editar el libro: " . $conexion->error . "<br>";
+        }
+    } else {
+        echo "No se realizaron cambios porque todos los campos están vacíos.<br>";
+    }
+}
+
+// Buscar información de un libro
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['buscar'])) {
+    $criterio = $_POST['criterio'];
+    
+    $query = "SELECT * FROM libros WHERE id LIKE '%$criterio%' OR titulo LIKE '%$criterio%' OR autor LIKE '%$criterio%'";
+    $resultado = $conexion->query($query);
+
+    if ($resultado->num_rows > 0) {
+        echo "<table border='1'>
+                <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Autor</th>
+                    <th>Año de Publicación</th>
+                    <th>Género</th>
+                </tr>";
+        
+        while($fila = $resultado->fetch_assoc()) {
+            echo "<tr>
+                    <td>" . $fila['id'] . "</td>
+                    <td>" . $fila['titulo'] . "</td>
+                    <td>" . $fila['autor'] . "</td>
+                    <td>" . $fila['anio_publicaciones'] . "</td>
+                    <td>" . $fila['genero'] . "</td>
+                </tr>";
+        }
+        
+        echo "</table>";
+    } else {
+        echo "No se encontraron resultados.";
+    }
+}
+
+// Mostrar información actual de la base de datos
+$query = "SELECT * FROM libros";
+$resultado = $conexion->query($query);
+
+if ($resultado->num_rows > 0) {
+    echo "<table border='1'>
+            <tr>
+                <th>ID</th>
+                <th>Título</th>
+                <th>Autor</th>
+                <th>Año de Publicación</th>
+                <th>Género</th>
+            </tr>";
+    
+    while($fila = $resultado->fetch_assoc()) {
+        echo "<tr>
+                <td>" . $fila['id'] . "</td>
+                <td>" . $fila['titulo'] . "</td>
+                <td>" . $fila['autor'] . "</td>
+                <td>" . $fila['anio_publicaciones'] . "</td>
+                <td>" . $fila['genero'] . "</td>
+            </tr>";
+    }
+    
+    echo "</table>";
+} else {
+    echo "No se encontraron resultados.";
+}
+
+$conexion->close();
+?>
+
+<!-- Añadir estilos CSS para organizar los formularios en una fila -->
+<style>
+    .formularios {
+        display: flex;
+        justify-content: space-between;
+        margin: 20px 0;
+    }
+
+    .formulario {
+        width: 20%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
+
+    .formulario h2 {
+        text-align: center;
+    }
+
+    .formulario form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .formulario label, .formulario input {
+        margin: 5px 0;
+    }
+
+    input[type="text"], input[type="submit"] {
+        padding: 8px;
+        font-size: 14px;
+        width: 80%;
+    }
+
+    input[type="submit"] {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+
+    input[type="submit"]:hover {
+        background-color: #45a049;
+    }
+
+    table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+    }
+
+    table, th, td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: center;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
+</style>
+
+<!-- Contenedor con todos los formularios en una fila -->
+<div class="formularios">
+    <!-- Formulario para agregar un libro -->
+    <div class="formulario">
+        <h2>Agregar un libro</h2>
+        <form method="POST" action="">
+            <label for="titulo">Título:</label>
+            <input type="text" id="titulo" name="titulo" required>
+
+            <label for="autor">Autor:</label>
+            <input type="text" id="autor" name="autor" required>
+
+            <label for="anio_publicaciones">Año de publicación:</label>
+            <input type="text" id="anio_publicaciones" name="anio_publicaciones" required>
+
+            <label for="genero">Género:</label>
+            <input type="text" id="genero" name="genero" required>
+
+            <input type="submit" name="agregar" value="Agregar libro">
+        </form>
+    </div>
+
+    <!-- Formulario para eliminar un libro -->
+    <div class="formulario">
+        <h2>Eliminar un libro</h2>
+        <form method="POST" action="">
+            <label for="id">ID del libro:</label>
+            <input type="text" id="id" name="id" required>
+
+            <input type="submit" name="eliminar" value="Eliminar libro">
+        </form>
+    </div>
+
+    <!-- Formulario para buscar un libro -->
+    <div class="formulario">
+        <h2>Buscar un libro</h2>
+        <form method="POST" action="">
+            <label for="criterio">Criterio de búsqueda (ID, Título o Autor):</label>
+            <input type="text" id="criterio" name="criterio" required>
+
+            <input type="submit" name="buscar" value="Buscar libro">
+        </form>
+    </div>
+
+    <!-- Formulario para editar un libro -->
+    <div class="formulario">
+        <h2>Editar un libro</h2>
+        <form method="POST" action="">
+            <label for="id">ID del libro:</label>
+            <input type="text" id="id" name="id" required>
+
+            <label for="titulo">Nuevo título:</label>
+            <input type="text" id="titulo" name="titulo">
+
+            <label for="autor">Nuevo autor:</label>
+            <input type="text" id="autor" name="autor">
+
+            <label for="anio_publicaciones">Nuevo año de publicación:</label>
+            <input type="text" id="anio_publicaciones" name="anio_publicaciones">
+
+            <label for="genero">Nuevo género:</label>
+            <input type="text" id="genero" name="genero">
+
+            <input type="submit" name="editar" value="Editar libro">
+        </form>
+    </div>
+</div>
